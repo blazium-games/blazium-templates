@@ -1,0 +1,244 @@
+name: Release starters
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: starters-catalog-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Require publish secrets
+        env:
+          DO_ACCESS_KEY: ${{ secrets.DO_ACCESS_KEY }}
+          DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+          DO_SPACE_NAME: ${{ secrets.DO_SPACE_NAME }}
+          DO_SPACE_REGION: ${{ secrets.DO_SPACE_REGION }}
+          CEREBRO_URL: ${{ secrets.CEREBRO_URL }}
+          BLAZIUM_AUTH: ${{ secrets.BLAZIUM_AUTH }}
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in DO_ACCESS_KEY DO_SECRET_KEY DO_SPACE_NAME DO_SPACE_REGION CEREBRO_URL BLAZIUM_AUTH; do
+            if [ -z "${!name}" ]; then
+              echo "missing secret ${name}"
+              missing=1
+            fi
+          done
+          test "$missing" -eq 0
+
+      - name: Get Version with Bioblaze/game-semver-action
+        uses: Bioblaze/game-semver-action@v10
+        id: version
+        with:
+          personal_github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Finalize version
+        id: finalize
+        run: |
+          set -euo pipefail
+          COMPUTED="${{ steps.version.outputs.simple_version }}"
+          BASE="0.1.0"
+          CDN_LATEST="$(curl -fsSL -H 'Cache-Control: no-cache' https://cdn.blazium.app/starters/starters.json | jq -r '.latest // empty' || true)"
+          if [[ "$CDN_LATEST" == "null" ]]; then
+            CDN_LATEST=""
+          fi
+          CANDIDATE="$(printf '%s\n%s\n' "$COMPUTED" "$BASE" | sort -V | tail -n1)"
+          bump_patch() {
+            local v="$1" major minor patch
+            IFS=. read -r major minor patch <<< "$v"
+            patch="${patch%%[^0-9]*}"
+            echo "${major}.${minor}.$((patch + 1))"
+          }
+          if [[ -n "$CDN_LATEST" ]]; then
+            HIGHER="$(printf '%s\n%s\n' "$CANDIDATE" "$CDN_LATEST" | sort -V | tail -n1)"
+            if [[ "$HIGHER" == "$CDN_LATEST" ]]; then
+              CANDIDATE="$(bump_patch "$CDN_LATEST")"
+            fi
+          fi
+          occupied() {
+            local v="$1" code
+            code="$(curl -s -o /dev/null -w '%{http_code}' -H 'Cache-Control: no-cache' "https://cdn.blazium.app/starters/${v}/starters.json" || true)"
+            [[ "$code" == "200" ]]
+          }
+          for _ in 1 2 3 4 5 6 7 8; do
+            if occupied "$CANDIDATE"; then
+              echo "occupied ${CANDIDATE}"
+              CANDIDATE="$(bump_patch "$CANDIDATE")"
+            else
+              break
+            fi
+          done
+          if occupied "$CANDIDATE"; then
+            echo "version ${CANDIDATE} is still occupied"
+            exit 1
+          fi
+          echo "computed=${COMPUTED} base=${BASE} cdn_latest=${CDN_LATEST:-none} => ${CANDIDATE}"
+          test -n "$CANDIDATE"
+          echo "simple_version=${CANDIDATE}" >> "$GITHUB_OUTPUT"
+
+      - name: Clone and zip starters
+        env:
+          VERSION: ${{ steps.finalize.outputs.simple_version }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, json, os, subprocess, zipfile
+          from pathlib import Path
+
+          lock = json.loads(Path("catalog/starters.lock.json").read_text(encoding="utf-8"))
+          starters = lock.get("starters")
+          if not isinstance(starters, list) or len(starters) != 28:
+              raise SystemExit("catalog/starters.lock.json must list 28 starters")
+          names = []
+          for entry in starters:
+              for key in ("name", "repo", "sha", "description"):
+                  if not str(entry.get(key, "")).strip():
+                      raise SystemExit(f"starter missing {key}: {entry!r}")
+              name = entry["name"]
+              if not name.startswith("template_") or "/" in name or "\\" in name:
+                  raise SystemExit(f"bad starter name {name}")
+              if entry["repo"] != f"blazium-games/{name}":
+                  raise SystemExit(f"repo mismatch for {name}")
+              sha = entry["sha"]
+              if len(sha) != 40 or any(c not in "0123456789abcdef" for c in sha):
+                  raise SystemExit(f"bad sha for {name}")
+              names.append(name)
+          if len(set(names)) != 28:
+              raise SystemExit("duplicate starter name")
+
+          version = os.environ["VERSION"]
+          root = Path("work")
+          dist = Path("dist")
+          dist.mkdir()
+          skip_dirs = {".git", ".godot", ".import"}
+          out = []
+          for entry in starters:
+              name = entry["name"]
+              repo = entry["repo"]
+              sha = entry["sha"]
+              dest = root / name
+              dest.mkdir(parents=True)
+              subprocess.check_call(["git", "init"], cwd=dest)
+              subprocess.check_call(["git", "remote", "add", "origin", f"https://github.com/{repo}.git"], cwd=dest)
+              subprocess.check_call(["git", "fetch", "--depth", "1", "origin", sha], cwd=dest)
+              subprocess.check_call(["git", "checkout", "--detach", "FETCH_HEAD"], cwd=dest)
+              head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=dest, text=True).strip()
+              if head != sha:
+                  raise SystemExit(f"{name} checked out {head}")
+              zip_path = dist / f"{name}.zip"
+              with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+                  for dirpath, dirnames, filenames in os.walk(dest):
+                      dirnames[:] = [d for d in dirnames if d not in skip_dirs]
+                      for filename in filenames:
+                          if filename.endswith(".uid"):
+                              continue
+                          full = Path(dirpath) / filename
+                          rel = full.relative_to(dest).as_posix()
+                          if rel == ".git" or rel.startswith(".git/") or "/.git/" in rel:
+                              continue
+                          zf.write(full, rel)
+              data = zip_path.read_bytes()
+              out.append({
+                  "name": name,
+                  "description": entry["description"],
+                  "file": f"https://cdn.blazium.app/starters/{version}/{name}.zip",
+                  "sha256": hashlib.sha256(data).hexdigest(),
+                  "size": len(data),
+                  "repo": repo,
+                  "commit": sha,
+                  "github": f"https://github.com/{repo}",
+                  "git": f"https://github.com/{repo}.git",
+              })
+          catalog = {"latest": version, "starters": out}
+          text = json.dumps(catalog, indent=2) + "\n"
+          Path("starters.json").write_text(text, encoding="utf-8")
+          (dist / "starters.json").write_text(text, encoding="utf-8")
+          print(f"packed {len(out)} starters as {version}")
+          PY
+
+      - uses: BetaHuhn/do-spaces-action@v2
+        with:
+          access_key: ${{ secrets.DO_ACCESS_KEY }}
+          secret_key: ${{ secrets.DO_SECRET_KEY }}
+          space_name: ${{ secrets.DO_SPACE_NAME }}
+          space_region: ${{ secrets.DO_SPACE_REGION }}
+          source: dist
+          out_dir: starters/${{ steps.finalize.outputs.simple_version }}
+
+      - uses: BetaHuhn/do-spaces-action@v2
+        with:
+          access_key: ${{ secrets.DO_ACCESS_KEY }}
+          secret_key: ${{ secrets.DO_SECRET_KEY }}
+          space_name: ${{ secrets.DO_SPACE_NAME }}
+          space_region: ${{ secrets.DO_SPACE_REGION }}
+          source: starters.json
+          out_dir: starters
+
+      - name: Register with Cerebro
+        env:
+          CEREBRO_URL: ${{ secrets.CEREBRO_URL }}
+          BLAZIUM_AUTH: ${{ secrets.BLAZIUM_AUTH }}
+          VERSION: ${{ steps.finalize.outputs.simple_version }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, urllib.request
+          from datetime import datetime, timezone
+          version = os.environ["VERSION"]
+          catalog = json.load(open("starters.json", encoding="utf-8"))
+          url = os.environ["CEREBRO_URL"].rstrip("/") + "/api/v1/tools"
+          auth = os.environ["BLAZIUM_AUTH"]
+          released = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+          for starter in catalog["starters"]:
+              body = {
+                  "name": starter["name"],
+                  "type": "starters",
+                  "version": version,
+                  "os": starter["name"],
+                  "arch": "zip",
+                  "file": starter["file"],
+                  "sig": "",
+                  "sha256": starter["sha256"],
+                  "size": starter["size"],
+                  "signing": "",
+                  "released_on": released,
+              }
+              req = urllib.request.Request(url, data=json.dumps(body).encode(), headers={
+                  "Content-Type": "application/json",
+                  "BLAZIUM_AUTH": auth,
+              })
+              with urllib.request.urlopen(req, timeout=60) as resp:
+                  print(starter["name"], resp.status)
+          PY
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VER: ${{ steps.finalize.outputs.simple_version }}
+        run: |
+          set -euo pipefail
+          TAG="v${VER}"
+          mapfile -t FILES < <(find dist -type f -name '*.zip' | sort)
+          test "${#FILES[@]}" -eq 28
+          NOTES="Blazium starters ${VER}
+
+          Catalog: https://cdn.blazium.app/starters/starters.json
+
+          Each starter entry has a zip plus github and git. Clone git and check out commit when the zip cannot be unpacked.
+          "
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "${FILES[@]}" --clobber
+          else
+            gh release create "$TAG" "${FILES[@]}" --title "Blazium starters ${VER}" --notes "$NOTES" --target "$GITHUB_SHA"
+          fi

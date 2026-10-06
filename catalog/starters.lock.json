@@ -1,0 +1,172 @@
+{
+  "starters": [
+    {
+      "name": "template_3d_empty",
+      "repo": "blazium-games/template_3d_empty",
+      "sha": "3c405be92eed35b201f0090e62921ccaa208292f",
+      "description": "A blank 3D root. Add a camera and mark it current before you build on this. Next: `scenes/stage.tscn`."
+    },
+    {
+      "name": "template_2d_empty",
+      "repo": "blazium-games/template_2d_empty",
+      "sha": "aa4362ee20e07b08632910b19f44648df906eb44",
+      "description": "A blank 2D root. Add a camera and make it current before you build on this. Next: `scenes/sheet.tscn`."
+    },
+    {
+      "name": "template_android",
+      "repo": "blazium-games/template_android",
+      "sha": "8af2a7a66417fa5c9d0323566bfd8de8879cc6dc",
+      "description": "A blank phone root. A panel under the status bar is rejected. Next: `scenes/panel.tscn`."
+    },
+    {
+      "name": "template_ios",
+      "repo": "blazium-games/template_ios",
+      "sha": "06fbdb1389d5e1683048a07ed94c138e29cd9a4f",
+      "description": "A blank phone root. A panel under the notch is rejected. Next: `scenes/panel.tscn`."
+    },
+    {
+      "name": "template_web",
+      "repo": "blazium-games/template_web",
+      "sha": "817ece1a89e4fe8ebe1b1a86bcc9dc09b69ec620",
+      "description": "A blank page root. Input before the page has focus is rejected. Next: `scenes/page.tscn`."
+    },
+    {
+      "name": "template_platform_menu",
+      "repo": "blazium-games/template_platform_menu",
+      "sha": "a7ffef5e126f1db461c5d463820f26c822e170b0",
+      "description": "One sheet that runs the Android, iOS, and Web rules. An unknown example is rejected. Next: `scenes/board.tscn`."
+    },
+    {
+      "name": "template_3d_basic",
+      "repo": "blazium-games/template_3d_basic",
+      "sha": "5f5f300d35bd0e68e7b94a2327c962fff52ff962",
+      "description": "One camera, one light, and one floor. Next: `scenes/annex.tscn`."
+    },
+    {
+      "name": "template_3d_fps_movement",
+      "repo": "blazium-games/template_3d_fps_movement",
+      "sha": "7cd26a809a2f3a70c42746d8aaba14476cd1ebba",
+      "description": "First-person walk, mouse look, and jump inside a box arena. Shift sprints. Next: `scenes/ramp.tscn`."
+    },
+    {
+      "name": "template_3d_city",
+      "repo": "blazium-games/template_3d_city",
+      "sha": "cb867e7da74da788ba4a4f3a25f5f41058528cb5",
+      "description": "A short block street and a walker. Block widths come from a seed. Next: `scenes/cross.tscn`."
+    },
+    {
+      "name": "template_3d_controller",
+      "repo": "blazium-games/template_3d_controller",
+      "sha": "705053265e1bbe6b258da83056bc6f50eda9b3c5",
+      "description": "Orbit a walker and take one shot at a crate. A second shot before the yard refill is rejected. Next: `scenes/yard.tscn`."
+    },
+    {
+      "name": "template_2d_platformer",
+      "repo": "blazium-games/template_2d_platformer",
+      "sha": "dccca94a253aec185e60b054cf61b44c042b4db2",
+      "description": "Run and jump one level. The goal does not count while the runner still overlaps the hazard. Next: `scenes/span.tscn`."
+    },
+    {
+      "name": "template_3d_platformer",
+      "repo": "blazium-games/template_3d_platformer",
+      "sha": "728e38ca5bc9c488456b05298d7eed65fae5cf0c",
+      "description": "Jump onto one platform and reach the goal. A second jump in the air is rejected. Next: `scenes/rise.tscn`."
+    },
+    {
+      "name": "template_2d_dungeon",
+      "repo": "blazium-games/template_2d_dungeon",
+      "sha": "32204e31ee35dc1c949965d5ab2e2b729a076449",
+      "description": "Sixteen seeded carvers, from rooms and caves through Prim's and the other mazes. The exit also needs a token. Next: `scenes/inner.tscn`."
+    },
+    {
+      "name": "template_3d_dungeon",
+      "repo": "blazium-games/template_3d_dungeon",
+      "sha": "d3b9d294a9c386d8d06725549eb18e543999cb8e",
+      "description": "The same sixteen carvers drawn as boxes. The exit also needs a token. Next: `scenes/deeper.tscn`."
+    },
+    {
+      "name": "template_2d_push_puzzle",
+      "repo": "blazium-games/template_2d_push_puzzle",
+      "sha": "52dfa7b1fb549f27209ff216aab8062a3a11127c",
+      "description": "Slide one crate onto one plate. A push into a wall or a blocker is rejected. Next: `scenes/board_two.tscn`."
+    },
+    {
+      "name": "template_3d_fps_combat",
+      "repo": "blazium-games/template_3d_fps_combat",
+      "sha": "35ba8877d79fb7c5d82f6f19baee9f2281cdd4e2",
+      "description": "Look and shoot one target. Primary fires. Leap reloads only at zero rounds. Next: `scenes/second_mark.tscn`."
+    },
+    {
+      "name": "template_3d_lan",
+      "repo": "blazium-games/template_3d_lan",
+      "sha": "927facefabd994fd99e63c6716cc12d467c7cba8",
+      "description": "Local ENet host and join, one spawn marker, and one hit. A port outside 1 to 65535 is rejected. Next: `scenes/pit.tscn`."
+    },
+    {
+      "name": "template_2d_tower_defense",
+      "repo": "blazium-games/template_2d_tower_defense",
+      "sha": "d0a822325217ca5bb0b7e2191578ceea1e2d1445",
+      "description": "One lane, one defender, one spend. Primary places. Leap marches. A place you cannot afford is rejected. Next: `scenes/bend.tscn`."
+    },
+    {
+      "name": "template_2d_survivor",
+      "repo": "blazium-games/template_2d_survivor",
+      "sha": "3d78deb04832419b496995ffc530384b1bada0b0",
+      "description": "Move inside a spawn region. Primary admits one foe, grants XP, and upgrades at the threshold. Next: `scenes/pick.tscn`."
+    },
+    {
+      "name": "template_3d_vehicle",
+      "repo": "blazium-games/template_3d_vehicle",
+      "sha": "3426646c7ae5ed2fe637bfc994c23683f443f729",
+      "description": "Walk a short seeded road and enter one car. A second enter while seated is rejected. Next: `scenes/stretch.tscn`."
+    },
+    {
+      "name": "template_2d_metroidvania",
+      "repo": "blazium-games/template_2d_metroidvania",
+      "sha": "81c4c580d4fa3c9c7ee6ee48a5d329eebecd4c31",
+      "description": "Two rooms and a gate. Primary takes the dash. Leap crosses only after the dash is owned. Next: `scenes/room_b.tscn`."
+    },
+    {
+      "name": "template_3d_exploration",
+      "repo": "blazium-games/template_3d_exploration",
+      "sha": "07d94c3e0fb71bf61fc889f3e4fd929c48882b98",
+      "description": "Orbit, walk, and pick up one token into a four-slot pack. Drop the oldest item to store a fifth. A blank id is rejected. Next: `scenes/grove.tscn`."
+    },
+    {
+      "name": "template_3d_card_battle",
+      "repo": "blazium-games/template_3d_card_battle",
+      "sha": "286c1db6ef63069c1d6621b1c4cb6bfb1746c621",
+      "description": "Elixir regenerates. Primary deploys on your half and strikes the tower. Leap plays the costly card. Next: `scenes/result.tscn`."
+    },
+    {
+      "name": "template_3d_racing",
+      "repo": "blazium-games/template_3d_racing",
+      "sha": "3713671359fa9aa8bb4dcee90fedbbc9e67611cc",
+      "description": "Drive one oval. Hold stride north. A lap counts only after the mid stripe, then the start stripe. Next: `scenes/finish.tscn`."
+    },
+    {
+      "name": "template_2d_turn_battle",
+      "repo": "blazium-games/template_2d_turn_battle",
+      "sha": "f1f7754a2103c17351ff4a3eab1aa608dd134ea4",
+      "description": "Three steps north enter a fight. Primary strikes. Leap guards. An action on the other side is skipped. Next: `scenes/fight.tscn`."
+    },
+    {
+      "name": "template_3d_coop",
+      "repo": "blazium-games/template_3d_coop",
+      "sha": "52504c2e1996ca985a9b87af3bf88fc0fa4a148a",
+      "description": "Two local bodies with different health pools. Primary applies a host hit. Leap tries a client hit and is rejected. Next: `scenes/roster.tscn`."
+    },
+    {
+      "name": "template_2d_menus",
+      "repo": "blazium-games/template_2d_menus",
+      "sha": "42d36d188665dc3d4afe74cbf15c2bdb53f5180c",
+      "description": "Main, pause, settings, credits, save, and load as separate Control scenes you can copy. Three slots reject a bad index, a bad version, and an overwrite without confirm. Next: `scenes/play_stage.tscn`."
+    },
+    {
+      "name": "template_3d_menus",
+      "repo": "blazium-games/template_3d_menus",
+      "sha": "1ebe3a4818d48294ef95154a046e03c316795511",
+      "description": "The same menus as lit 3D panels with a current camera. Copy one board scene and its script. Slots and prefs match the 2D starter. Next: `scenes/play_yard.tscn`."
+    }
+  ]
+}
